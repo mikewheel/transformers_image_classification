@@ -3,3 +3,4 @@ pandas
 dask
 scrapy
 torch
+torchvision
