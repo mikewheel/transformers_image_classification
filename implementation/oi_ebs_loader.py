@@ -13,6 +13,7 @@ class OpenImagesEBSDataset(Dataset):
     
     def add_item(self, item):
         """Saves an image and its associated data to disk, managing batch sizes while doing so."""
+        pass
     
     def __len__(self):
         """Returns the number of entries in the OpenImages dataset. Required for a custom Torch Dataset."""
