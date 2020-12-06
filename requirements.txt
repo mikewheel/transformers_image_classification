@@ -2,5 +2,6 @@ jupyter
 pandas
 dask
 scrapy
+scikit-learn
 torch
 torchvision
