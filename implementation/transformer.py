@@ -40,7 +40,7 @@ class VisionTransformer(torch.nn.Module):
         self.position_embedding_layer = torch.nn.Embedding(num_embeddings=self.num_patches+1,
                                                            embedding_dim=self.transformer_hidden_size)
         
-        # Transformer itself: out-of-the-box this isn't structured exactly like the original implementation
+        # Transformer itself: out-of-the-box this isn't structured exactly like the original ViT implementation
         # TODO explain those differences
         self.encoder_layer = torch.nn.TransformerEncoderLayer(d_model=self.transformer_hidden_size,
                                                               nhead=self.transformer_num_heads, dropout=0,
@@ -49,11 +49,12 @@ class VisionTransformer(torch.nn.Module):
         self.encoder = torch.nn.TransformerEncoder(encoder_layer=self.encoder_layer,
                                                    num_layers=self.transformer_num_layers)
         
-        # The final classification head: "one hidden layer at pre-training time,
+        # The final classification head: "one hidden layer at pre-training time, linear layer only at fine-tuning time"
         self.classification_head = torch.nn.Sequential(
             torch.nn.Linear(in_features=self.transformer_hidden_size, out_features=self.transformer_hidden_size),
             torch.nn.Tanh(),
             torch.nn.Linear(in_features=self.transformer_hidden_size, out_features=self.num_classes),
+            torch.nn.Softmax(dim=2),
         )
 
     def forward(self, x):
@@ -74,16 +75,22 @@ class VisionTransformer(torch.nn.Module):
         
         # Add position embeddings to the sequence
         position_embeddings = self.position_embedding_layer(torch.arange(end=self.num_patches+1))
-        position_embeddings = torch.transpose(position_embeddings, 0, 1)
+        position_embeddings = torch.transpose(*(position_embeddings, 0, 1))
         x_patches_with_class_and_posn = x_patches_with_class + position_embeddings
-        assert x_patches_with_class_and_posn.shape[1] == 2 * self.transformer_hidden_size
+        assert x_patches_with_class_and_posn.shape[1] == self.transformer_hidden_size
         
-        # TODO pass through the Transformer
+        # Pass the data through the Transformer encoder
+        x_patches_with_class_and_posn = x_patches_with_class_and_posn.permute(*(2, 0, 1))
         transformer_out = self.encoder(x_patches_with_class_and_posn)
         
-        # TODO class token only
-        # TODO: classification head
-        pass
+        # Take from the Transformer's output the learned class token only
+        transformer_out_class_token = transformer_out[0, :, :].unsqueeze(0)
+        
+        # Note: Since we're using PyTorch's built-in Transformer encoder an additional LayerNorm is not necessary here
+        # Pass it through the classification head
+        out = self.classification_head(transformer_out_class_token)
+        assert out.shape[2] == 10
+        return out
 
 
 # Taken from the in-class exercise on 2020-10-15 covering image classification with CNNs
@@ -140,7 +147,7 @@ if __name__ == "__main__":
     
     # Global parameters
     this_device = "cpu"
-    num_epochs = 20
+    num_epochs = 10
     batch_size = 4096
     adam_learning_rate = 0.0005
     adam_betas = (0.9, 0.999)
@@ -176,5 +183,6 @@ if __name__ == "__main__":
     training_losses = train_model(optimizer, ViT_model, cifar10_train_data_loader, this_device, num_epochs=num_epochs)
     y, y_hat = test_model(ViT_model, cifar10_test_data_loader, this_device)
     test_accuracy = accuracy_score(y, y_hat)
+    print(f'Test accuracy: {round(test_accuracy, 4)}')
     
-    # TODO make some graphs? plot the classificaiton matrix? Generate other scores?
+    # TODO make some graphs? plot the classification matrix? Generate other scores?
