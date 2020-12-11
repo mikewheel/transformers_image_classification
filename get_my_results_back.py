@@ -1,6 +1,7 @@
 """When Google Colab stops your runtime and deletes the CSV file you'd been writing to disk that whole time,
-   then this is the kind of code you have to write to get your results back :/"""
+   then this is the kind of code you have to write to get your results back"""
    
+import csv
 import re
 
 experiment_output = [
@@ -368,6 +369,12 @@ experiment_output = [
     
 if __name__ == "__main__":
     test_accuracy_statements = [log_msg for log_msg in experiment_output if log_msg.startswith("Test accuracy at")]
-    test_accuracy_vs_epoch = [re.findall(None, log_msg) for log_msg in test_accuracy_statements]
-    # TODO: plot these results
+    pattern = r'Test accuracy at epoch (\d+): ([\d\.]+)'
+    test_accuracy_vs_epoch = [re.findall(pattern, log_msg)[0] for log_msg in test_accuracy_statements]
+    test_accuracy_vs_epoch = [(float(first), float(second)) for first, second in test_accuracy_vs_epoch]
     
+    with open('vit_test_set_accuracy_over_epochs.csv', "w") as f:
+        csv_writer = csv.writer(f)
+        csv_writer.writerow(["Epoch", "Test Set Accuracy"])
+        for item in test_accuracy_vs_epoch:
+            csv_writer.writerow(item)
