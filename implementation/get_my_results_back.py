@@ -4,6 +4,8 @@
 import csv
 import re
 
+import config
+
 experiment_output = [
     "Begin Epoch 1: 2020-12-11 06:33:40.211884\n",
     "Begin Epoch 2: 2020-12-11 06:35:31.193122\n",
@@ -373,7 +375,7 @@ if __name__ == "__main__":
     test_accuracy_vs_epoch = [re.findall(pattern, log_msg)[0] for log_msg in test_accuracy_statements]
     test_accuracy_vs_epoch = [(float(first), float(second)) for first, second in test_accuracy_vs_epoch]
     
-    with open('vit_test_set_accuracy_over_epochs.csv', "w") as f:
+    with open(config.BASE_DIR / 'data' / 'ViT_test_set_accuracy_over_epochs.csv', "w") as f:
         csv_writer = csv.writer(f)
         csv_writer.writerow(["Epoch", "Test Set Accuracy"])
         for item in test_accuracy_vs_epoch:
