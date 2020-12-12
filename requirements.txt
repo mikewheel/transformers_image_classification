@@ -5,3 +5,4 @@ scrapy
 scikit-learn
 torch
 torchvision
+matplotlib
