@@ -1,0 +1,389 @@
+#LyX 2.3 created this file. For more info see http://www.lyx.org/
+\lyxformat 544
+\begin_document
+\begin_header
+\save_transient_properties true
+\origin unavailable
+\textclass article
+\use_default_options true
+\maintain_unincluded_children false
+\language english
+\language_package default
+\inputencoding auto
+\fontencoding global
+\font_roman "default" "default"
+\font_sans "default" "default"
+\font_typewriter "default" "default"
+\font_math "auto" "auto"
+\font_default_family default
+\use_non_tex_fonts false
+\font_sc false
+\font_osf false
+\font_sf_scale 100 100
+\font_tt_scale 100 100
+\use_microtype false
+\use_dash_ligatures true
+\graphics default
+\default_output_format default
+\output_sync 0
+\bibtex_command default
+\index_command default
+\paperfontsize default
+\spacing single
+\use_hyperref false
+\papersize default
+\use_geometry true
+\use_package amsmath 1
+\use_package amssymb 1
+\use_package cancel 1
+\use_package esint 1
+\use_package mathdots 1
+\use_package mathtools 1
+\use_package mhchem 1
+\use_package stackrel 1
+\use_package stmaryrd 1
+\use_package undertilde 1
+\cite_engine basic
+\cite_engine_type default
+\biblio_style plain
+\use_bibtopic false
+\use_indices false
+\paperorientation portrait
+\suppress_date false
+\justification true
+\use_refstyle 1
+\use_minted 0
+\index Index
+\shortcut idx
+\color #008000
+\end_index
+\topmargin 0.5in
+\rightmargin 1in
+\bottommargin 1in
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation indent
+\paragraph_indentation default
+\is_math_indent 0
+\math_numbering_side default
+\quotes_style english
+\dynamic_quotes 0
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\tracking_changes false
+\output_changes false
+\html_math_output 0
+\html_css_as_file 0
+\html_be_strict false
+\end_header
+
+\begin_body
+
+\begin_layout Title
+Final Project Report for DS4440: Practical Neural Networks
+\end_layout
+
+\begin_layout Author
+Michael Wheeler
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+wheeler.m@northeastern.edu
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
+Abstract
+\end_layout
+
+\begin_layout Standard
+For my final project I replicated the model architecture presented in 
+\shape italic
+An Image is Worth 16x16 Words: Transformers for Image Recognition at Scale
+\shape default
+ by Dosovitskiy et al.
+ 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "dosovitskiy2020animage"
+literal "false"
+
+\end_inset
+
+ in order to explore emerging research surrounding image classification
+ with the Transformer architecture.
+ I used the auto-differentiation library PyTorch to implement a scaled-down
+ version of the Vision Transformer model in a self-contained Jupyter notebook,
+ and ran the notebook on Google Colab to execute a small training experiment
+ against a baseline model.
+\end_layout
+
+\begin_layout Section
+Background
+\end_layout
+
+\begin_layout Standard
+For the past ten years or more convolutional neural networks (abbr.
+ CNNs) have been considered the state-of-the-art approach for the task of
+ supervised image classification.
+ 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "rawat2017deepconvolutional"
+literal "false"
+
+\end_inset
+
+ Within the past year however, a handful of prominent researchers have begun
+ to explore the application of the Transformer — a sequence-to-sequence
+ architecture originally popularized for machine translation 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "vaswani2017attention"
+literal "false"
+
+\end_inset
+
+ — to image classification and other computer vision tasks.
+ 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "dosovitskiy2020animage,wu2020visualtransformers,chen2020generative"
+literal "false"
+
+\end_inset
+
+ As a continuation of the work I did exploring these cutting-edge approaches
+ for my midterm topic survey, I attempted to build my own Transformer model
+ to classify images.
+\end_layout
+
+\begin_layout Standard
+In particular, I chose to focus on the Vision Transformer by Dosovitskiy
+ et al.
+ due to both the simplicity of the approach and the availability of reference
+ code: the researchers tout the ability to use an out-of-the-box Transformer
+ implementation as an advantage of their methodology, and made their implementat
+ion open-source on GitHub.
+ 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "2020googleresearchvisiontransformer"
+literal "false"
+
+\end_inset
+
+ The authors of 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "dosovitskiy2020animage"
+literal "false"
+
+\end_inset
+
+ performed experiments on models as large as 632 million parameters, trained
+ on datasets with as many as 300 million images, making their original methodolo
+gy out of reach for a half-semester's worth of work.
+ Thus, the main contribution of my project is a scaled-down approach: implementi
+ng a model identical in structure with fewer parameters and evaluating on
+ a smaller dataset.
+ Specifically I chose the CIFAR-10 benchmark dataset for the project, which
+ contains 50,000 training examples and 10,000 test examples of 32-pixel
+ square images each belonging to exactly one of ten classes.
+ 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "cifar10,krizhevsky2009learning"
+literal "false"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
+Implementation
+\end_layout
+
+\begin_layout Standard
+The model implementation I produced for this project generally follows the
+ structure of the reference implementation 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "2020googleresearchvisiontransformer"
+literal "false"
+
+\end_inset
+
+ with a few modifications.
+ Image patching — the novel means by which 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "dosovitskiy2020animage"
+literal "false"
+
+\end_inset
+
+ converts an image into a sequence — happens on a smaller scale (4px in
+ length vs 14px or greater) due to the difference in size between my training
+ images and theirs.
+ I used PyTorch's built-in Transformer encoder components rather than rewriting
+ them from scratch, so the structure of the encoder layers differs slightly
+ from that of the original.
+ Specifically the application of LayerNorm happens after the multi-headed
+ self-attention and feed-forward components instead of before, in line with
+ 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "vaswani2017attention"
+literal "false"
+
+\end_inset
+
+.
+ Finally I made use of smaller embedding sizes at several points throughout
+ the model: a hidden size of 288 versus 768 or greater in the original,
+ and a feed-forward layer size of 512 in the encoder layers versus 3072
+ or greater in the original.
+ All told, my Vision Transformer consisted of approximately 8 million total
+ parameters, versus 86 million or greater in the models described in 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "dosovitskiy2020animage"
+literal "false"
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+I evaluated my Transformer implementation by also training a simple CNN
+ as a point of comparison.
+ The baseline model consisted of approximately 44,000 total parameters,
+ making use of two alternating convolutional and pooling layers followed
+ by three linear layers.
+ In this case I use ReLU activation for all hidden states except those produced
+ by pooling, and apply the softmax function at the end to produce the classifica
+tion probabilities.
+ Both the Vision Transformer and the baseline model make use of the same
+ optimizer: Adam, with a learning rate of 0.00015 and betas equal to 0.9 and
+ 0.999 respectively.
+ I measured the performance of both models by calculating top-1 accuracy
+ on the CIFAR-10 test set, taken after every five epochs over a training
+ lifetime of 300 or more epochs.
+ (see Figure 1 for details)
+\end_layout
+
+\begin_layout Section
+Results
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename test_acc_vs_epochs.png
+	width 6in
+	height 6in
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+A plot of the Vision Transformer's performance on the CIFAR-10 test set
+ across training time compared to a baseline CNN.
+ Top-1 accuracy was evaluated every five epochs for both models; while the
+ baseline model ran for 500 epochs, the Vision Transformer could only run
+ for 300 epochs due to constraints from Google Colab.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Figure 1 shows the test set performance of the Vision Transformer versus
+ the baseline model as a function of training time.
+ The progression over epochs is clear for both models: due to the low learning
+ rate used for each model's optimizer, the curves show a slow and steady
+ progression towards each model's top performance on the classification
+ task.
+ Despite having relatively fewer data points from the Transformer's training
+ process, it is clear to see that the Transformer model plateaus earlier
+ and performs better by the end of training.
+ Still, the Transformer's performance is nowhere near the >0.95 accuracies
+ reported in 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "dosovitskiy2020animage"
+literal "false"
+
+\end_inset
+
+, and there remains much room for improvement.
+\end_layout
+
+\begin_layout Section
+Future Work
+\end_layout
+
+\begin_layout Standard
+There are a number of things I would try to further improve this model given
+ the time.
+ Perhaps the most important one is acquiring more training data: to come
+ closer to the scale at which the original implementation achieved such
+ great results I would be interested in using a much larger dataset and
+ training on larger batches.
+ OpenImages V6, for instance, consists of about 9 million total images with
+ over one thousand classes, far surpassing CIFAR-10 in richness and diversity.
+ I also believe that implementing a learning rate schedule would improve
+ the training performance during the later epochs: the original implementation
+ emphasized the importance of learning rate decay in their pre-training
+ experiments.
+ Finally, it is likely that further experimentation with hyperparameters
+ such as the embedding dimension, number of encoder layers, and patch size
+ would yield higher accuracy without a substantial increase in development
+ or training time.
+\end_layout
+
+\begin_layout Standard
+\begin_inset CommandInset bibtex
+LatexCommand bibtex
+btprint "btPrintCited"
+bibfiles "final_report"
+options "unsrt"
+
+\end_inset
+
+
+\end_layout
+
+\end_body
+\end_document
